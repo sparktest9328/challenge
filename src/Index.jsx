@@ -11,20 +11,19 @@ class Index extends Component {
       content: '',
       maxLength: 3
     }
-    this.handleMaxLength = this.handleMaxLength.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.handleChangeContent = this.handleChangeContent.bind(this);
+    this.handleClearMessage = this.handleClearMessage.bind(this);
   }
   render() {
-    const { data_list, content, maxLength } = this.state;
-    const message_obj = { data_list, maxLength, handleMaxLength: this.handleMaxLength };
+    const message_obj = { ...this.state, clearMessage: this.handleClearMessage };
     return (
       <div className="container">
         <div>
-          <input type="text" name="content" value={ content }
-            onChange={ e => this.handleChangeContent(e) }
-            onKeyPress={ e => this.handleKeyPress(e) }
-          /> 
+          <input type="text" name="content" value={this.state.content}
+            onChange={e => this.handleChangeContent(e)}
+            onKeyPress={e => this.handleKeyPress(e)}
+          />
         </div>
         <div>
           <MessageBoard { ...message_obj } />
@@ -32,47 +31,80 @@ class Index extends Component {
       </div>
     );
   }
-  handleChangeContent (e) {
+  handleChangeContent(e) {
     const { value } = e.target;
     this.setState({
       content: value
     })
   }
-  handleMaxLength (maxLength) {
-    this.setState({ maxLength })
-  }
-  handleKeyPress (e) {
+  handleKeyPress(e) {
     const { value } = e.target;
     if (e.key === 'Enter') {
       const new_content = { avatar: true, message: value, createAt: new Date().toLocaleString() };
       this.setState({
         content: '',
-        data_list: this.state.data_list.concat(new_content)
+        data_list: [new_content, ...this.state.data_list]
       })
     }
   }
+  handleClearMessage() {
+    this.setState({
+      data_list: []
+    })
+  }
 };
 
-const MessageBoard = ({ data_list, maxLength, handleMaxLength }) => {
-  let exceeded = data_list.length > maxLength;
-  let result = data_list
-  return (
-    <ul>
-      { result.map((v, d) => <Message info={ v } key={ d }/>) }
-    </ul>
-  );
+class MessageBoard extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      flag: false
+    }
+    this.handleDisplay = this.handleDisplay.bind(this);
+    this.handleClear = this.handleClear.bind(this);
+  }
+
+  handleDisplay(e) {
+    this.setState({
+      flag: !this.state.flag
+    })
+  }
+
+  handleClear(e) {
+    this.props.clearMessage();
+    this.setState({
+      flag: false,
+    })
+  }
+
+  render() {
+    let { data_list, maxLength } = this.props;
+    let result = (data_list.length > maxLength && !this.state.flag) ? data_list.filter((list, index) => index < 3) : data_list;
+    let mode = null;
+    return (
+      <div>
+        <ul>
+          {result.map((current, index) => <Message {...current} key={index} />)}
+        </ul>
+        {data_list[0] && <button onClick={this.handleClear}>CLEAR ALL</button>}
+        {(data_list.length >= 4) ? <button onClick={this.handleDisplay}>{(this.state.flag) ? 'LESS' : 'MORE'}</button> :
+          null
+        }
+      </div>
+    )
+  }
 }
 
-const Message = ({ info }) => {
+const Message = ({ message, createAt }) => {
   return (
     <li>
       <div className="info">
         <div className="content">
           <div>
-            { info.message }
+            {message}
           </div>
           <div>
-            { info.createAt }
+            {createAt}
           </div>
         </div>
       </div>
