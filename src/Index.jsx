@@ -12,19 +12,20 @@ class Index extends Component {
       maxLength: 3
     }
     this.handleMaxLength = this.handleMaxLength.bind(this);
+    this.handleData_list = this.handleData_list.bind(this); /* Add handleData_list function*/
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.handleChangeContent = this.handleChangeContent.bind(this);
   }
   render() {
     const { data_list, content, maxLength } = this.state;
-    const message_obj = { data_list, maxLength, handleMaxLength: this.handleMaxLength };
+    const message_obj = { data_list, maxLength, handleMaxLength: this.handleMaxLength, handleData_list: this.handleData_list }; /* input handleData_list function*/
     return (
       <div className="container">
         <div>
           <input type="text" name="content" value={ content }
             onChange={ e => this.handleChangeContent(e) }
             onKeyPress={ e => this.handleKeyPress(e) }
-          /> 
+          />
         </div>
         <div>
           <MessageBoard { ...message_obj } />
@@ -41,26 +42,47 @@ class Index extends Component {
   handleMaxLength (maxLength) {
     this.setState({ maxLength })
   }
+  handleData_list (data_list) { /* Add handleData_list function, reset data_list*/
+    this.setState({ data_list })
+  }
   handleKeyPress (e) {
     const { value } = e.target;
     if (e.key === 'Enter') {
-      const new_content = { avatar: true, message: value, createAt: new Date().toLocaleString() };
+      this.state.maxLength = 3 /* reset maxLength to show 3 messages*/
+      const new_content = [{ avatar: true, message: value, createAt: new Date().toLocaleString() }]; /* change object to an array. ie:add []*/
       this.setState({
         content: '',
-        data_list: this.state.data_list.concat(new_content)
+        data_list: new_content.concat(this.state.data_list) /* reverse the order */
       })
     }
   }
 };
 
-const MessageBoard = ({ data_list, maxLength, handleMaxLength }) => {
+const MessageBoard = ({ data_list, maxLength, handleMaxLength, handleData_list }) => { /* input handleData_list function*/
   let exceeded = data_list.length > maxLength;
   let result = data_list
-  return (
-    <ul>
-      { result.map((v, d) => <Message info={ v } key={ d }/>) }
-    </ul>
-  );
+  /* determine whether data_list > max-maxLength or not */
+  if(exceeded) {
+    result = result.slice(0, maxLength) /* slice data_list */
+    return (
+      <div>
+        <button onClick={() => handleData_list([])}>Delete All</button> {/* Delete data_list */}
+        <ul>
+          { result.map((v, d) => <Message info={ v } key={ d }/>) }
+        </ul>
+        <button onClick={() => handleMaxLength(data_list.length)}>More</button> {/* Show all data_list */}
+      </div>
+    );
+  } else {
+    return (
+      <div>
+        <button onClick={() => handleData_list([])}>Delete All</button> {/* Delete data_list */}
+        <ul>
+          { result.map((v, d) => <Message info={ v } key={ d }/>) }
+        </ul>
+      </div>
+    );
+  }
 }
 
 const Message = ({ info }) => {
